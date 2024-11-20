@@ -19,13 +19,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// Middleware para manejar JSON
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Servir archivos estáticos en la carpeta public
 app.use(express.static('public'));
 
 // Ruta para manejar la carga del archivo
 app.post('/upload', upload.single('file'), (req, res) => {
     const inputFilePath = path.join(__dirname, 'uploads', req.file.filename);
-    const outputFilePath = path.join(__dirname, 'uploads', `${path.parse(req.file.filename).name}.csv`);
 
     // Leer el archivo de Excel
     const workbook = xlsx.readFile(inputFilePath);
@@ -35,18 +38,24 @@ app.post('/upload', upload.single('file'), (req, res) => {
     // Convertir la hoja a CSV
     const csv = xlsx.utils.sheet_to_csv(worksheet);
 
-    // Escribir el CSV en un archivo
-    fs.writeFileSync(outputFilePath, csv);
-
     // Enviar el archivo CSV como respuesta
+    res.json({
+        original: req.file.originalname,
+        csv: csv
+    });
+});
+
+// Ruta para exportar el contenido editado
+app.post('/export', (req, res) => {
+    const { content } = req.body;
+
+    const outputFilePath = path.join(__dirname, 'uploads', 'exported.csv');
+    fs.writeFileSync(outputFilePath, content);
+
     res.download(outputFilePath, (err) => {
         if (err) {
             console.error(err);
         }
-
-        // Limpiar los archivos subidos después de la descarga
-        fs.unlinkSync(inputFilePath);
-        fs.unlinkSync(outputFilePath);
     });
 });
 
