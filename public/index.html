@@ -4,43 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Excel a CSV Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-        #preview {
-            width: 45%;
-            border: 1px solid #ccc;
-            padding: 10px;
-            height: 400px;
-            overflow-y: scroll;
-        }
-        #editor {
-            width: 45%;
-            border: 1px solid #ccc;
-            padding: 10px;
-            height: 400px;
-            overflow-y: scroll;
-            white-space: pre; /* Mantener espacios en blanco */
-        }
-        button {
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css"> <!-- Enlace al archivo CSS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 </head>
 <body>
 
-    <div>
+    <h1>Convertidor de Excel a CSV</h1>
+
+    <div class="button-container">
         <input type="file" id="fileInput" accept=".xlsx,.xls" />
         <button onclick="previewFile()">Previsualizar</button>
         <button onclick="exportCSV()">Exportar</button>
     </div>
 
-    <div id="preview"></div>
-    <textarea id="editor"></textarea>
+    <div class="container">
+        <div id="preview"></div>
+        <textarea id="editor" placeholder="Aquí puedes editar el contenido CSV..."></textarea>
+    </div>
 
     <script>
         let csvContent = '';
@@ -52,43 +32,44 @@
                 return;
             }
 
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+            const file = fileInput.files[0];
+            const reader = new FileReader();
 
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData,
-            });
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
 
-            const data = await response.json();
-            document.getElementById('preview').innerText = `Archivo original: ${data.original}\n\nContenido:\n${data.csv}`;
-            csvContent = data.csv; // Guardar el CSV para exportar
-            document.getElementById('editor').value = csvContent; // Mostrar CSV en el editor
+                // Obtener la primera hoja
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+
+                // Convertir la hoja a CSV
+                csvContent = XLSX.utils.sheet_to_csv(worksheet);
+
+                // Convertir a HTML y mostrar en el div de previsualización
+                const html = XLSX.utils.sheet_to_html(worksheet);
+                document.getElementById('preview').innerHTML = html;
+
+                // Mostrar CSV en el editor
+                document.getElementById('editor').value = csvContent;
+            };
+
+            reader.readAsArrayBuffer(file);
         }
 
         async function exportCSV() {
             const content = document.getElementById('editor').value;
 
-            const response = await fetch('/export', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content }),
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'exported.csv';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-            } else {
-                alert("Error al exportar el archivo.");
-            }
+            const blob = new Blob([content], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'exported.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
         }
     </script>
 

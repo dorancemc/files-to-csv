@@ -1,20 +1,50 @@
 body {
   font-family: Arial, sans-serif;
+  margin: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.button-container {
+  margin-bottom: 20px;
 }
 
 .container {
-  width: 80%;
-  margin: auto;
-  text-align: center;
-}
-
-.preview {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
+  width: 100%; /* Asegurarse de que ocupe todo el ancho */
 }
 
-textarea {
-  width: 45%;
+#preview, #editor {
+  width: 50%; /* Cada uno ocupará el 50% del ancho */
+  border: 1px solid #ccc;
+  padding: 10px;
   height: 400px;
+  overflow-y: scroll;
+  background-color: #f9f9f9; /* Color de fondo claro */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra suave */
+}
+
+#editor {
+  font-family: monospace; /* Fuente monoespaciada para el editor */
+}
+
+button {
+  margin-right: 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007BFF; /* Color de fondo azul */
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0056b3; /* Color de fondo azul más oscuro al pasar el ratón */
 }
